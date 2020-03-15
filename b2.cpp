@@ -11,7 +11,6 @@ B2::B2(QObject* parent)
     : QObject(parent),
       nam_(NetworkAccessManager::get())
 {
-    qInfo() << "Started B2 API";
 }
 
 QString getJson(QJsonObject obj) {
@@ -67,6 +66,24 @@ void B2::onFileCopied(QNetworkReply* rep) {
 void B2::copyFile(FilePointer f, FileName destination) {
     QString url = QStringLiteral("%1/b2api/v2/b2_copy_file").arg(apiUrl);
     nam_->post(url, getJson({{"sourceFileId", f->id}, {"fileName", destination}}), token, getHandler(&B2::onFileCopied));
+}
+
+void B2::onFileDeleted(QNetworkReply* rep, FilePointer f, DeleteMode) {
+    auto content = rep->readAll();
+    auto doc = QJsonDocument::fromJson(content).object();
+
+    Q_ASSERT(doc["fileId"].toString() == f->id);
+    emit fileDeleted(f);
+}
+
+void B2::deleteFile(FilePointer f, DeleteMode mode) {
+    Q_ASSERT_X(mode == DeleteMode::DeleteLatestVersion, "B2::deleteFile", "Only DeleteMode::DeleteLatestVersion is supported");
+
+    QString url = QStringLiteral("%1/b2api/v2/b2_delete_file_version").arg(apiUrl);
+    nam_->post(url, getJson({{"fileId", f->id}, {"fileName", f->fileName}}), token,
+               [&, f](QNetworkReply* reply) {
+               onFileDeleted(reply, f, mode);
+    });
 }
 
 void B2::getFiles(BucketPointer b, QString prefix) {

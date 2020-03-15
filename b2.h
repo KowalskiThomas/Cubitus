@@ -41,7 +41,13 @@ signals:
 class B2 : public QObject
 {
     Q_OBJECT
+public:
+    enum class DeleteMode {
+        DeleteLatestVersion = false,
+        DeleteAllVersions = true
+    };
 
+private:
     friend FileLister;
 
     NetworkAccessManager* nam_;
@@ -50,6 +56,7 @@ class B2 : public QObject
     void onAuthenticationResponse(QNetworkReply*);
     void onBucketsReceived(QNetworkReply*);
     void onFileCopied(QNetworkReply*);
+    void onFileDeleted(QNetworkReply*, FilePointer, DeleteMode);
 
     template<typename T>
     std::function<void(QNetworkReply*)> getHandler(T meth);
@@ -59,6 +66,7 @@ class B2 : public QObject
     QString apiUrl;
 
 public:
+
     B2(QObject* parent = nullptr);
 
     void connectApi(QString keyId, QString key);
@@ -66,6 +74,7 @@ public:
     void getFiles(BucketPointer, QString prefix = QString());
 
     void copyFile(FilePointer, FileName destination);
+    void deleteFile(FilePointer, DeleteMode = DeleteMode::DeleteLatestVersion);
 
 signals:
     void apiConnected();
@@ -74,4 +83,5 @@ signals:
     void bucketsReceived(QVector<BucketPointer>);
     void filesReceived(QVector<FilePointer>);
     void fileCopied(FilePointer);
+    void fileDeleted(FilePointer);
 };

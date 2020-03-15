@@ -45,6 +45,11 @@ MainWindow::MainWindow(B2* b2_, QWidget *parent)
 
     connect(b2, &B2::fileCopied, this, [&](FilePointer f) {
         qInfo() << "File copied to" << f->fileName;
+        b2->deleteFile(f);
+    });
+
+    connect(b2, &B2::fileDeleted, this, [&](FilePointer originalFile) {
+        qInfo() << "File" << originalFile->fileName << "deleted";
     });
 }
 
