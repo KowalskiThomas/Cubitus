@@ -101,7 +101,6 @@ void B2::deleteFile(FilePointer f, DeleteMode mode) {
 }
 
 void B2::onFileCopiedInternal(FilePointer from, FilePointer to) {
-    qDebug() << from->fileName << "has been copied to" << to->fileName << "requesting delete";
     awaitingMoves[from->id] = { from, to };
     awaitingDeletions.insert(from->id);
     deleteFile(from);

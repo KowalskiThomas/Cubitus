@@ -43,7 +43,7 @@ MainWindow::MainWindow(B2* b2_, QWidget *parent)
                b2->renameFile(secondFile, QStringLiteral("Moved %1").arg(secondFile->fileName));
             }
 
-            qInfo() << f->fileName;
+            qInfo() << '\t' << f->fileName;
        }
     });
 
