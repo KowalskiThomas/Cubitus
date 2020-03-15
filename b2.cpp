@@ -11,6 +11,8 @@ B2::B2(QObject* parent)
     : QObject(parent),
       nam_(NetworkAccessManager::get())
 {
+    connect(this, &B2::fileCopiedInternal, this, &B2::onFileCopiedInternal);
+    connect(this, &B2::fileDeletedInternal, this, &B2::onFileDeletedInternal);
 }
 
 QString B2::getJson(QJsonObject obj) {
@@ -55,17 +57,24 @@ void B2::getBuckets() {
     nam_->post(url, getJson({"accountId", accountId}), token, getHandler(&B2::onBucketsReceived));
 }
 
-void B2::onFileCopied(QNetworkReply* rep) {
+void B2::onFileCopied(QNetworkReply* rep, FilePointer f) {
     auto content = rep->readAll();
     auto doc = QJsonDocument::fromJson(content).object();
     auto newFile = File::fromJson(doc);
 
-    emit fileCopied(newFile);
+    if (awaitingCopies.contains(f->id)) {
+        awaitingCopies.remove(f->id);
+        emit fileCopiedInternal(f, newFile);
+    } else
+        emit fileCopied(f, newFile);
 }
 
 void B2::copyFile(FilePointer f, FileName destination) {
     QString url = QStringLiteral("%1/b2api/v2/b2_copy_file").arg(apiUrl);
-    nam_->post(url, getJson({{"sourceFileId", f->id}, {"fileName", destination}}), token, getHandler(&B2::onFileCopied));
+    nam_->post(url, getJson({{"sourceFileId", f->id}, {"fileName", destination}}), token,
+               [this, f](QNetworkReply* rep) {
+                   onFileCopied(rep, f);
+               });
 }
 
 void B2::onFileDeleted(QNetworkReply* rep, FilePointer f, DeleteMode) {
@@ -73,7 +82,12 @@ void B2::onFileDeleted(QNetworkReply* rep, FilePointer f, DeleteMode) {
     auto doc = QJsonDocument::fromJson(content).object();
 
     Q_ASSERT(doc["fileId"].toString() == f->id);
-    emit fileDeleted(f);
+
+    if (awaitingDeletions.contains(f->id)) {
+        awaitingDeletions.remove(f->id);
+        emit fileDeletedInternal(f);
+    } else
+        emit fileDeleted(f);
 }
 
 void B2::deleteFile(FilePointer f, DeleteMode mode) {
@@ -82,8 +96,25 @@ void B2::deleteFile(FilePointer f, DeleteMode mode) {
     QString url = QStringLiteral("%1/b2api/v2/b2_delete_file_version").arg(apiUrl);
     nam_->post(url, getJson({{"fileId", f->id}, {"fileName", f->fileName}}), token,
                [&, f](QNetworkReply* reply) {
-               onFileDeleted(reply, f, mode);
-    });
+                    onFileDeleted(reply, f, mode);
+               });
+}
+
+void B2::onFileCopiedInternal(FilePointer from, FilePointer to) {
+    qDebug() << from->fileName << "has been copied to" << to->fileName << "requesting delete";
+    awaitingMoves[from->id] = { from, to };
+    awaitingDeletions.insert(from->id);
+    deleteFile(from);
+}
+
+void B2::onFileDeletedInternal(FilePointer f) {
+    auto pair = awaitingMoves.take(f->id);
+    emit fileRenamed(pair.first, pair.second);
+}
+
+void B2::renameFile(FilePointer f, FileName newName) {
+    awaitingCopies.insert(f->id);
+    copyFile(f, newName);
 }
 
 void B2::getFiles(BucketPointer b, QString prefix) {

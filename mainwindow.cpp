@@ -6,6 +6,7 @@
 
 static BucketPointer bucket;
 static FilePointer firstFile;
+static FilePointer secondFile;
 
 MainWindow::MainWindow(B2* b2_, QWidget *parent)
     : b2(b2_),
@@ -37,9 +38,12 @@ MainWindow::MainWindow(B2* b2_, QWidget *parent)
                firstFile = f;
                b2->copyFile(firstFile, QStringLiteral("Copie de %1.db").arg(firstFile->id));
             }
+            else if (!secondFile) {
+               secondFile = f;
+               b2->renameFile(secondFile, QStringLiteral("Moved %1").arg(secondFile->fileName));
+            }
 
-           qInfo() << f->fileName;
-
+            qInfo() << f->fileName;
        }
     });
 
@@ -50,6 +54,10 @@ MainWindow::MainWindow(B2* b2_, QWidget *parent)
 
     connect(b2, &B2::fileDeleted, this, [&](FilePointer originalFile) {
         qInfo() << "File" << originalFile->fileName << "deleted";
+    });
+
+    connect(b2, &B2::fileRenamed, this, [&](FilePointer from, FilePointer to) {
+        qInfo() << "Renamed" << from->fileName << "to" << to->fileName;
     });
 }
 

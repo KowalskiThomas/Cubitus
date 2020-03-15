@@ -14,6 +14,28 @@ class NetworkAccessManager;
 class FileLister;
 class B2;
 
+
+class OneShotReplyHandler : public QObject {
+    Q_OBJECT
+public:
+    using handler_t = std::function<void(void*)>;
+
+private:
+    handler_t handler;
+
+public:
+    OneShotReplyHandler(handler_t handler)
+        : handler(handler)
+    {
+
+    }
+
+    void handle(void* rep) {
+        handler(rep);
+        deleteLater();
+    }
+};
+
 class FileLister : public QObject {
     Q_OBJECT
 
@@ -55,8 +77,16 @@ private:
     void onResponse(QNetworkReply*);
     void onAuthenticationResponse(QNetworkReply*);
     void onBucketsReceived(QNetworkReply*);
-    void onFileCopied(QNetworkReply*);
+    void onFileCopied(QNetworkReply*, FilePointer);
     void onFileDeleted(QNetworkReply*, FilePointer, DeleteMode);
+    void onFileRenamed(QNetworkReply*, FilePointer);
+    void onFileCopiedInternal(FilePointer from, FilePointer to);
+    void onFileDeletedInternal(FilePointer);
+
+    QSet<FileId> awaitingCopies;
+    QSet<FileId> awaitingDeletions;
+
+    QMap<FileId, QPair<FilePointer, FilePointer>> awaitingMoves;
 
     static QString getJson(QJsonObject);
     static QString getJson(QPair<QString, QString>);
@@ -78,6 +108,7 @@ public:
 
     void copyFile(FilePointer, FileName destination);
     void deleteFile(FilePointer, DeleteMode = DeleteMode::DeleteLatestVersion);
+    void renameFile(FilePointer, FileName);
 
 signals:
     void apiConnected();
@@ -85,6 +116,9 @@ signals:
 
     void bucketsReceived(QVector<BucketPointer>);
     void filesReceived(QVector<FilePointer>);
-    void fileCopied(FilePointer);
+    void fileCopied(FilePointer from, FilePointer to);
+    void fileCopiedInternal(FilePointer from, FilePointer to);
     void fileDeleted(FilePointer);
+    void fileDeletedInternal(FilePointer);
+    void fileRenamed(FilePointer from, FilePointer to);
 };
