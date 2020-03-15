@@ -17,10 +17,13 @@ private:
     QNetworkReply* reply;
     handler_t handler;
 
+    static inline std::atomic<size_t> handlerCount = 0ull;
+
 public:
     ReplyHandler(QNetworkReply* reply, handler_t handler)
         : reply(reply), handler(handler)
     {
+        handlerCount++;
     }
 
     void handle() {
@@ -29,7 +32,10 @@ public:
     }
 
     ~ReplyHandler() {
-        qDebug() << "Deleting ReplyHandler";
+        handlerCount--;
+        if (handlerCount > 15) {
+            qWarning() << "Possible memory leak detected in ReplyHandler";
+        }
     }
 };
 

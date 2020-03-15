@@ -49,6 +49,7 @@ class B2 : public QObject
     void onResponse(QNetworkReply*);
     void onAuthenticationResponse(QNetworkReply*);
     void onBucketsReceived(QNetworkReply*);
+    void onFileCopied(QNetworkReply*);
 
     template<typename T>
     std::function<void(QNetworkReply*)> getHandler(T meth);
@@ -64,10 +65,13 @@ public:
     void getBuckets();
     void getFiles(BucketPointer, QString prefix = QString());
 
+    void copyFile(FilePointer, FileName destination);
+
 signals:
     void apiConnected();
     void authenticationFailed();
 
     void bucketsReceived(QVector<BucketPointer>);
     void filesReceived(QVector<FilePointer>);
+    void fileCopied(FilePointer);
 };

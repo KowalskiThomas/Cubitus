@@ -14,6 +14,14 @@ B2::B2(QObject* parent)
     qInfo() << "Started B2 API";
 }
 
+QString getJson(QJsonObject obj) {
+    return QJsonDocument(obj).toJson();
+}
+
+QString getJson(QPair<QString, QString> s) {
+    return getJson(QJsonObject({{s.first, s.second}}));
+}
+
 void B2::onAuthenticationResponse(QNetworkReply* rep) {
     auto content = rep->readAll();
     auto doc = QJsonDocument::fromJson(content).object();
@@ -43,17 +51,22 @@ void B2::onBucketsReceived(QNetworkReply* rep) {
     emit bucketsReceived(buckets);
 }
 
-QString getJson(QJsonObject obj) {
-    return QJsonDocument(obj).toJson();
-}
-
-QString getJson(QPair<QString, QString> s) {
-    return getJson(QJsonObject({{s.first, s.second}}));
-}
-
 void B2::getBuckets() {
     auto url = QStringLiteral("%1/b2api/v2/b2_list_buckets").arg(apiUrl);
     nam_->post(url, getJson({"accountId", accountId}), token, getHandler(&B2::onBucketsReceived));
+}
+
+void B2::onFileCopied(QNetworkReply* rep) {
+    auto content = rep->readAll();
+    auto doc = QJsonDocument::fromJson(content).object();
+    auto newFile = File::fromJson(doc);
+
+    emit fileCopied(newFile);
+}
+
+void B2::copyFile(FilePointer f, FileName destination) {
+    QString url = QStringLiteral("%1/b2api/v2/b2_copy_file").arg(apiUrl);
+    nam_->post(url, getJson({{"sourceFileId", f->id}, {"fileName", destination}}), token, getHandler(&B2::onFileCopied));
 }
 
 void B2::getFiles(BucketPointer b, QString prefix) {

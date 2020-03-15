@@ -30,12 +30,12 @@ void NetworkAccessManager::get(QNetworkRequest* req, ReplyHandler::handler_t han
     auto reply = networkAccessManager_->get(*req);
     auto replyHandler = new ReplyHandler(reply, handler);
     QObject::connect(reply, &QNetworkReply::finished, replyHandler, &ReplyHandler::handle);
-
-    /*
     QObject::connect(reply,
                      QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error),
-                     std::bind(&NetworkAccessManager::errorTrap, this, reply, std::placeholders::_2));
-    */
+                     [=](QNetworkReply::NetworkError err) {
+                        qDebug() << "get" << err;
+                     });
+                     // std::bind(&NetworkAccessManager::errorTrap, this, reply, std::placeholders::_2));
 }
 
 void NetworkAccessManager::get(QString url, QString username, QString password, ReplyHandler::handler_t handler) {
@@ -57,7 +57,7 @@ void NetworkAccessManager::post(QNetworkRequest *req, QString data, ReplyHandler
     QObject::connect(reply,
                      QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error),
                      [=](QNetworkReply::NetworkError err) {
-                        qDebug() << err;
+                        qDebug() << "post" << err;
                      });
                      // std::bind(&NetworkAccessManager::errorTrap, this, reply, std::placeholders::_3));
 }

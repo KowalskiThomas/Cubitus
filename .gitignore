@@ -1,3 +1,6 @@
+build
+release
+debug
 config.h
 *.user
 # This file is used to ignore files which are generated

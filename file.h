@@ -7,13 +7,16 @@ class File;
 using FilePointer = QSharedPointer<File>;
 
 using FileName = QString;
+using FileId = QString;
 
 class File
 {
 public:
+    FileId id;
     FileName fileName;
+
 public:
-    File(FileName fileName);
+    File(FileId id, FileName fileName);
 
     [[nodiscard]] static FilePointer fromJson(const QJsonObject& obj);
 };
