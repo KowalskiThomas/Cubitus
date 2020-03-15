@@ -13,11 +13,11 @@ B2::B2(QObject* parent)
 {
 }
 
-QString getJson(QJsonObject obj) {
+QString B2::getJson(QJsonObject obj) {
     return QJsonDocument(obj).toJson();
 }
 
-QString getJson(QPair<QString, QString> s) {
+QString B2::getJson(QPair<QString, QString> s) {
     return getJson(QJsonObject({{s.first, s.second}}));
 }
 
@@ -96,12 +96,12 @@ void B2::getFiles(BucketPointer b, QString prefix) {
 
 void FileLister::get() {
     auto url = QStringLiteral("%1/b2api/v2/b2_list_file_names").arg(b2->apiUrl);
-    b2->nam_->post(url, getJson({
-                                 { "bucketId", bucketId},
-                                 { "prefix", prefix},
-                                 { "startFileName", nextFileName},
-                                 { "maxFileCount", 1000 }
-                             }),
+    b2->nam_->post(url, B2::getJson({
+                                      { "bucketId", bucketId},
+                                      { "prefix", prefix},
+                                      { "startFileName", nextFileName},
+                                      { "maxFileCount", 1000 }
+                                    }),
                b2->token,
                [this](QNetworkReply* rep) {
                    onPartialFileListReceived(rep);

@@ -58,6 +58,9 @@ private:
     void onFileCopied(QNetworkReply*);
     void onFileDeleted(QNetworkReply*, FilePointer, DeleteMode);
 
+    static QString getJson(QJsonObject);
+    static QString getJson(QPair<QString, QString>);
+
     template<typename T>
     std::function<void(QNetworkReply*)> getHandler(T meth);
 
