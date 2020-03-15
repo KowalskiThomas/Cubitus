@@ -3,24 +3,52 @@
 #include <QObject>
 #include <QDebug>
 #include <QNetworkReply>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 #include "bucket.h"
 #include "file.h"
 
 class NetworkAccessManager;
+class FileLister;
+class B2;
+
+class FileLister : public QObject {
+    Q_OBJECT
+
+    B2* b2;
+    FileName nextFileName;
+    BucketId bucketId;
+    QString prefix;
+
+    QVector<FilePointer> files;
+public:
+    FileLister(B2* b2, BucketId bucketId, QString prefix)
+        : b2(b2), bucketId(bucketId), prefix(prefix)
+    {
+
+    }
+
+    void onPartialFileListReceived(QNetworkReply* rep);
+
+    void get();
+
+signals:
+    void filesReceived(QVector<FilePointer>);
+};
 
 class B2 : public QObject
 {
     Q_OBJECT
+
+    friend FileLister;
 
     NetworkAccessManager* nam_;
 
     void onResponse(QNetworkReply*);
     void onAuthenticationResponse(QNetworkReply*);
     void onBucketsReceived(QNetworkReply*);
-    void onPartialFileListReceived(BucketId, size_t c, QNetworkReply*);
-
-    void getFiles(BucketId, size_t requestId, QString);
 
     template<typename T>
     std::function<void(QNetworkReply*)> getHandler(T meth);
