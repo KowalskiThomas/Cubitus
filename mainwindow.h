@@ -16,8 +16,8 @@ class MainWindow : public QMainWindow
     B2* b2;
 
 public:
-    MainWindow(B2*, QWidget *parent = nullptr);
-    ~MainWindow();
+    explicit MainWindow(B2*, QWidget *parent = nullptr);
+    ~MainWindow() override;
 
 private:
     Ui::MainWindow *ui;

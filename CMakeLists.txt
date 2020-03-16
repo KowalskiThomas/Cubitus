@@ -32,9 +32,13 @@ target_link_libraries(b2 PRIVATE Qt5::Network)
 add_executable(Cubitus
     main.cpp
     config.h
-    mainwindow.cpp
-    mainwindow.h
-    mainwindow.ui
+    mainwindow.cpp    mainwindow.h    mainwindow.ui
+    filestreemodel.cpp filestreemodel.h
+    filestreetable.cpp filestreetable.h
+    filesmodel.cpp filesmodel.h
+    filetreeitem.cpp filetreeitem.h
+    b2test.cpp b2test.h
 )
 target_link_libraries(Cubitus PRIVATE Qt5::Widgets Qt5::Network)
 target_link_libraries(Cubitus PRIVATE b2)
+target_include_directories(Cubitus PRIVATE cmake-build-debug)

@@ -1,7 +1,11 @@
 #include "file.h"
 
-File::File(FileId id, FileName fileName)
-    : id(id), fileName(fileName)
+#include <utility>
+
+File::File(FileId id, FileName fileName, FileSize fileSize)
+    : id(std::move(id)),
+    fileName(std::move(fileName)),
+    fileSize(fileSize)
 {
 
 }
@@ -9,6 +13,15 @@ File::File(FileId id, FileName fileName)
 FilePointer File::fromJson(const QJsonObject &obj) {
     return FilePointer(new File(
                            obj["fileId"].toString(),
-                           obj["fileName"].toString()
+                           obj["fileName"].toString(),
+                           obj["contentLength"].toInt()
                            ));
+}
+
+QString File::fileNameWithoutParentFolder() const {
+    auto lastSlash = fileName.lastIndexOf('/');
+    if (lastSlash == -1)
+        return fileName;
+
+    return fileName.mid(lastSlash + 1);
 }
