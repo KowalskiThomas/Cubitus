@@ -1,11 +1,6 @@
 #pragma once
 
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QDebug>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
+#include "common_include.h"
 
 class ReplyHandler : public QObject {
     Q_OBJECT
