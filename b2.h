@@ -1,12 +1,6 @@
 #pragma once
 
-#include <QObject>
-#include <QDebug>
-#include <QNetworkReply>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
-
+#include "common_include.h"
 #include "bucket.h"
 #include "file.h"
 
