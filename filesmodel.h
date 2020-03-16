@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QObject>
+#include "common_include.h"
 #include "bucket.h"
 #include "file.h"
 
