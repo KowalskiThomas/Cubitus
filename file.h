@@ -3,6 +3,8 @@
 #include <QSharedPointer>
 #include <QJsonObject>
 
+using BucketId = QString;
+
 class File;
 using FilePointer = QSharedPointer<File>;
 
@@ -13,12 +15,13 @@ using FileSize = size_t;
 class File
 {
 public:
+    BucketId bucketId;
     FileId id;
     FileName fileName;
     FileSize fileSize;
 
 public:
-    File(FileId id, FileName fileName, FileSize fileSize);
+    File(BucketId, FileId id, FileName fileName, FileSize fileSize);
 
     [[nodiscard]] static FilePointer fromJson(const QJsonObject& obj);
 

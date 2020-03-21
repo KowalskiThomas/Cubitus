@@ -1,9 +1,11 @@
 #include "file.h"
+#include "bucket.h"
 
 #include <utility>
 
-File::File(FileId id, FileName fileName, FileSize fileSize)
-    : id(std::move(id)),
+File::File(BucketId bucketId, FileId id, FileName fileName, FileSize fileSize)
+    : bucketId(bucketId),
+    id(std::move(id)),
     fileName(std::move(fileName)),
     fileSize(fileSize)
 {
@@ -12,6 +14,7 @@ File::File(FileId id, FileName fileName, FileSize fileSize)
 
 FilePointer File::fromJson(const QJsonObject &obj) {
     return FilePointer(new File(
+            obj["bucketId"].toString(),
                            obj["fileId"].toString(),
                            obj["fileName"].toString(),
                            obj["contentLength"].toInt()

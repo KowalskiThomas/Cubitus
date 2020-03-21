@@ -4,10 +4,10 @@
 
 QVector<FileTreeItem *> items;
 
-FileTreeItem* FilesTreeModel::getParentForFileName(FileName fileName) {
+FileTreeItem* FilesTreeModel::getParentForFileName(const BucketPointer& bucket, const FileName& fileName) {
     auto lastSlash = fileName.lastIndexOf('/');
     if (lastSlash == -1)
-        return rootItem;
+        return bucketItems[bucket->id];
 
     auto parentFolder = fileName.mid(0, lastSlash);
 
@@ -15,8 +15,8 @@ FileTreeItem* FilesTreeModel::getParentForFileName(FileName fileName) {
     if (folders.contains(parentFolder)) {
         parentItem = folders[parentFolder];
     } else {
-        auto parentParent = getParentForFileName(parentFolder);
-        auto newParent = new FileTreeItem({parentFolder}, true, parentParent);
+        auto parentParent = getParentForFileName(bucket, parentFolder);
+        auto newParent = new FileTreeItem({parentFolder}, FileTreeItemType::Folder, parentParent);
         parentParent->appendChild(newParent);
         parentItem = newParent;
         folders[parentFolder] = parentItem;
@@ -24,21 +24,32 @@ FileTreeItem* FilesTreeModel::getParentForFileName(FileName fileName) {
     return parentItem;
 }
 
-FilesTreeModel::FilesTreeModel(FilesModel *filesModel, QObject *parent)
-        : filesModel(filesModel), QAbstractItemModel(parent) {
-    rootItem = new FileTreeItem({}, true);
-    filesModel->init();
+FilesTreeModel::FilesTreeModel(FilesModel *filesModel_, QObject *parent)
+        : filesModel(filesModel_), QAbstractItemModel(parent) {
+    rootItem = new FileTreeItem({}, FileTreeItemType::Root);
+    filesModel_->init();
 
-
-    connect(filesModel, &FilesModel::filesReceived, this, [this](QVector<FilePointer> files) {
+    connect(filesModel_, &FilesModel::bucketsReceived, this, [this](QVector<BucketPointer> buckets) {
         emit layoutAboutToBeChanged();
-        for (auto file : files) {
+        for(const auto& bucket : buckets) {
+            auto item = new FileTreeItem({bucket->name, bucket->id, ""}, FileTreeItemType::Bucket, rootItem);
+            bucketItems[bucket->id] = item;
+            rootItem->appendChild(item);
+        }
+        emit layoutChanged();
+    });
+
+    connect(filesModel_, &FilesModel::filesReceived, this, [this](QVector<FilePointer> files) {
+        emit layoutAboutToBeChanged();
+        for (const auto& file : files) {
             auto fileName = file->fileName;
             if (fileName.endsWith(".bzEmpty"))
                 continue;
 
-            auto parent = getParentForFileName(fileName);
-            auto item = new FileTreeItem({file->fileNameWithoutParentFolder(), file->id, QString::number(file->fileSize)}, false, parent);
+            auto parent = getParentForFileName(filesModel->bucket(file->bucketId), fileName);
+            auto item = new FileTreeItem(
+                    {file->fileNameWithoutParentFolder(), file->id, QString::number(file->fileSize)},
+                    FileTreeItemType::File, parent);
             parent->appendChild(item);
             items.push_back(item);
         }
@@ -145,15 +156,23 @@ FilesTreeModel::~FilesTreeModel() {
 
 void FilesTreeModel::changeRoot(const QModelIndex &idx) {
     emit layoutAboutToBeChanged();
-    auto pointer = static_cast<FileTreeItem *>(idx.internalPointer());
-    if (!pointer->isFolder())
+
+    auto item = static_cast<FileTreeItem *>(idx.internalPointer());
+    if (item->isFile())
         return;
-    rootItem = pointer;
+
+    rootItem = item;
+
+    if (item->isBucket()) {
+        auto bucketName = item->data(0).toString();
+        filesModel->getFiles(bucketName);
+    }
+
     emit layoutChanged();
 }
 
-FileTreeItem::FileTreeItem(QVector<QVariant> data, bool isFolder, FileTreeItem *parentItem)
-        : m_itemData(std::move(data)), isFolder_(isFolder), m_parentItem(parentItem) {
+FileTreeItem::FileTreeItem(QVector<QVariant> data, FileTreeItemType itemType, FileTreeItem *parentItem)
+        : m_itemData(std::move(data)), m_itemType(itemType), m_parentItem(parentItem) {
 }
 
 FileTreeItem::~FileTreeItem() {

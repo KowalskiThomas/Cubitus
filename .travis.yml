@@ -19,17 +19,17 @@ jobs:
         sources:
         - ubuntu-toolchain-r-test
         packages:
-        - g++-5
-    env: COMPILER=g++-5 CXX=g++-5
+        - g++
+    env: COMPILER=g++ CXX=g++
   - compiler: clang
     addons:
       apt:
         sources:
         - ubuntu-toolchain-r-test
-        - llvm-toolchain-precise-3.8
+        - llvm-toolchain-precise
         packages:
-        - clang-3.8
-    env: COMPILER=clang++-3.8
+        - clang++
+    env: COMPILER=clang++
 
 before_install:
 - sudo apt-get update -qq
@@ -37,8 +37,8 @@ before_install:
 
 
 install:
-- if [ "$CXX" = "g++" ]; then export CXX="g++-5" CC="gcc-5"; fi
-- if [ "$CXX" = "clang++" ]; then export CXX="clang++-3.8" CC="clang-3.8"; fi
+- if [ "$CXX" = "g++" ]; then export CXX="g++" CC="gcc"; fi
+- if [ "$CXX" = "clang++" ]; then export CXX="clang++" CC="clang"; fi
 
 script:
 - mkdir release

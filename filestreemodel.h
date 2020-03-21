@@ -11,10 +11,11 @@ class FilesTreeModel : public QAbstractItemModel
     Q_OBJECT
 
     FilesModel* filesModel;
-    QMap<QString, FileTreeItem *> folders = {{"", rootItem}};
+    QMap<QString, FileTreeItem *> folders;
+    QMap<BucketId, FileTreeItem *> bucketItems = {{"", rootItem}};
 
 public:
-    explicit FilesTreeModel(FilesModel* model, QObject *parent = nullptr);
+    explicit FilesTreeModel(FilesModel* filesModel_, QObject *parent = nullptr);
     ~FilesTreeModel() override;
 
     [[nodiscard]] QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
@@ -38,7 +39,7 @@ public:
 private:
     FileTreeItem *rootItem;
 
-    FileTreeItem *getParentForFileName(FileName fileName);
+    FileTreeItem *getParentForFileName(const BucketPointer& bucket, const FileName& fileName);
 };
 
 #endif // FILESTREEMODEL_H

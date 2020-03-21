@@ -3,15 +3,22 @@
 #include <QVector>
 #include <QVariant>
 
+enum class FileTreeItemType {
+    File = 0,
+    Folder,
+    Bucket,
+    Root
+};
+
 class FileTreeItem {
 private:
     QVector<FileTreeItem*> m_childItems;
     QVector<QVariant> m_itemData;
     FileTreeItem *m_parentItem;
-    bool isFolder_;
+    FileTreeItemType m_itemType;
 
 public:
-    explicit FileTreeItem(QVector<QVariant> data, bool isFolder, FileTreeItem *parentItem = nullptr);
+    explicit FileTreeItem(QVector<QVariant> data, FileTreeItemType itemType, FileTreeItem *parentItem = nullptr);
     ~FileTreeItem();
 
     void appendChild(FileTreeItem *child);
@@ -23,5 +30,7 @@ public:
     [[nodiscard]] int row() const;
     FileTreeItem *parentItem();
 
-    [[nodiscard]] bool isFolder() const { return isFolder_; }
+    [[nodiscard]] bool isFolder() const { return m_itemType == FileTreeItemType::Folder; }
+    [[nodiscard]] bool isBucket() const { return m_itemType == FileTreeItemType::Bucket; }
+    [[nodiscard]] bool isFile() const { return m_itemType == FileTreeItemType::File; }
 };

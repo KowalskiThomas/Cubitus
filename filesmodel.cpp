@@ -5,6 +5,7 @@
 #include "b2.h"
 #include "config.h"
 
+
 FilesModel::FilesModel(B2* b2, QObject* parent)
     : b2(b2)
 {
@@ -23,14 +24,23 @@ void FilesModel::onApiConnected() {
 
 void FilesModel::onBucketsReceived(QVector<BucketPointer> buckets) {
     buckets_ = std::move(buckets);
-    qDebug() << buckets_.size();
-    auto testBucket = std::find_if(buckets_.begin(), buckets_.end(), [](BucketPointer b) {
-        return b->name.contains("test", Qt::CaseInsensitive);
+    for(const auto& bucket : buckets_)
+        if (!filesMap_.contains(bucket->id))
+            filesMap_[bucket->id] = QHash<QString, FilePointer>();
+
+    emit bucketsReceived(buckets_);
+}
+
+void FilesModel::getFiles(const BucketName& name) {
+    qInfo() << "Gathering file for bucket" << name;
+    auto bucketIt = std::find_if(buckets_.begin(), buckets_.end(), [this, name](BucketPointer p) {
+        return p->name == name;
     });
-    if (testBucket != buckets_.end())
-        b2->getFiles(*testBucket);
-    else
-        qDebug() << "Can't find bucket";
+    if (bucketIt == buckets_.end()) {
+        qWarning() << "Could not find bucket" << name;
+        return;
+    }
+    b2->getFiles(*bucketIt);
 }
 
 void FilesModel::onFilesReceived(QVector<FilePointer> files) {
