@@ -10,6 +10,8 @@ enum class FileTreeItemType {
     Root
 };
 
+using FileSize = size_t;
+
 class FileTreeItem {
 private:
     QVector<FileTreeItem*> m_childItems;
@@ -22,6 +24,8 @@ public:
     ~FileTreeItem();
 
     void appendChild(FileTreeItem *child);
+
+    QString humanSize(FileSize) const;
 
     FileTreeItem *child(int row);
     [[nodiscard]] int childCount() const;

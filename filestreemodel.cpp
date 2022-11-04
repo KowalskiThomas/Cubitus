@@ -205,10 +205,29 @@ int FileTreeItem::columnCount() const {
     return m_itemData.count();
 }
 
+QString FileTreeItem::humanSize(FileSize size) const {
+    static const FileSize ONE_KB = 1024;
+    static const FileSize ONE_MB = 1024 * ONE_KB;
+    static const FileSize ONE_GB = 1024 * ONE_MB;
+
+    auto sizeDouble = static_cast<double>(size);
+    if (size > ONE_GB)
+        return QString::number(sizeDouble / ONE_GB, 'f', 2) + " GB";
+    else if (size > ONE_MB)
+        return QString::number(sizeDouble / ONE_MB, 'f', 2) + " MB";
+    else if (size > ONE_KB)
+        return QString::number(sizeDouble / ONE_KB, 'f', 2) + " KB";
+    else
+        return QString::number(sizeDouble, 'f', 2) + " bytes";
+}
+
 QVariant FileTreeItem::data(int column) const {
     if (column < 0 || column >= m_itemData.size())
         return QVariant();
 
+    if (column == 2)
+        return humanSize(m_itemData.at(column).toULongLong());
+    
     return m_itemData.at(column);
 }
 
